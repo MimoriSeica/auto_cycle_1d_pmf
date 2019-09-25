@@ -28,9 +28,28 @@ def make_init_setting_file():
 def initialize():
     write_setting_file(make_init_setting_file())
 
-def simulation_init():
-    os.system("echo simulation_init")
-    #os.system("bash simulation/init/run.sh")
+class simulation_init:
+
+    def make_sh(self):
+        filename = "simulation/init/run.sh"
+        print("writing %s..." % (filename))
+        with open(filename, 'w') as f:
+            f.write("#!/bin/bash\n")
+            f.write("\n")
+            f.write("sander -O \\\n")
+            f.write(" -p simulation/init/alat.prmtop \\\n")
+            f.write(" -i simulation/init/run.in \\\n")
+            f.write(" -c simulation/init/alat.crd \\\n")
+            f.write(" -o simulation/init/run.out \\\n")
+            f.write(" -r simulation/init/run.rst \\\n")
+            f.write(" -x simulation/init/run.nc\n")
+            f.write("\n")
+        os.chmod(filename, 0o755)
+
+    def __init__(self):
+        os.system("echo simulation_init")
+        self.make_sh()
+        os.system("bash simulation/init/run.sh")
 
 class simulation_umbrella_setting:
     def make_input(self, setting_data):
@@ -55,7 +74,7 @@ class simulation_umbrella_setting:
             f.write(" &wt\n")
             f.write("  type='END',\n")
             f.write(" /\n")
-            f.write("DISANG=run.disang\n")
+            f.write("DISANG=simulation/umbrella_setting/run.disang\n")
             f.write("\n")
 
     def make_sh(self, setting_data):
@@ -65,12 +84,12 @@ class simulation_umbrella_setting:
             f.write("#!/bin/bash\n")
             f.write("\n")
             f.write("sander -O \\\n")
-            f.write(" -p ../init/alat.prmtop \\\n")
-            f.write(" -i run_%d.in \\\n")
-            f.write(" -c ../init/run.rst \\\n")
-            f.write(" -o run.out \\\n")
-            f.write(" -r run.rst \\\n")
-            f.write(" -x run.nc\n")
+            f.write(" -p simulation/init/alat.prmtop \\\n")
+            f.write(" -i simulation/umbrella_setting/run.in \\\n")
+            f.write(" -c simulation/init/run.rst \\\n")
+            f.write(" -o simulation/umbrella_setting/run.out \\\n")
+            f.write(" -r simulation/umbrella_setting/run.rst \\\n")
+            f.write(" -x simulation/umbrella_setting/run.nc\n")
             f.write("\n")
         os.chmod(filename, 0o755)
 
@@ -97,7 +116,7 @@ class simulation_umbrella_setting:
         self.make_input(setting_data)
         self.make_sh(setting_data)
         os.system("echo simulation_umbrella_setting")
-        #os.system("bash simulation/umbrella_setting/run.sh")
+        os.system("bash simulation/umbrella_setting/run.sh")
 
 class simulation_production:
     def make_input(self, setting_data):
@@ -116,7 +135,7 @@ class simulation_production:
             f.write("   ntt=3, gamma_ln=2.0, temp0=300.0,\n")
             f.write("   ntb=0, nscm=10000,\n")
             f.write("   ioutfm=1,\n")
-            f.write("   nstlim=5000000, dt=0.002,\n")
+            f.write("   nstlim=500000, dt=0.002,\n")
             f.write("   ntpr=5000, ntwx=5000, ntwv=0, ntwr=500000,\n")
             f.write("   nmropt=1,\n")
             f.write(" /\n")
@@ -126,8 +145,8 @@ class simulation_production:
             f.write(" &wt\n")
             f.write("  type='END',\n")
             f.write(" /\n")
-            f.write("DISANG=run.disang\n")
-            f.write("DUMPAVE=../data/run_%d.dat\n" % (value))
+            f.write("DISANG=simulation/production/run.disang\n")
+            f.write("DUMPAVE=simulation/data/run_%d.dat\n" % (value))
             f.write("\n")
 
     def make_sh(self, setting_data):
@@ -138,12 +157,12 @@ class simulation_production:
             f.write("\n")
             #f.write("NPROC=2\n")
             f.write("sander -O \\\n")
-            f.write(" -p ../init/alat.prmtop \\\n")
-            f.write(" -i run.in \\\n")
-            f.write(" -c ../umbrella_setting/run.rst \\\n")
-            f.write(" -o run.out \\\n")
-            f.write(" -r run.rst \\\n")
-            f.write(" -x run.nc\n")
+            f.write(" -p simulation/init/alat.prmtop \\\n")
+            f.write(" -i simulation/production/run.in \\\n")
+            f.write(" -c simulation/umbrella_setting/run.rst \\\n")
+            f.write(" -o simulation/production/run.out \\\n")
+            f.write(" -r simulation/production/run.rst \\\n")
+            f.write(" -x simulation/production/run.nc\n")
             f.write("\n")
         os.chmod(filename, 0o755)
 
@@ -164,7 +183,7 @@ class simulation_production:
         self.make_input(setting_data)
         self.make_sh(setting_data)
         os.system("echo simulation_production")
-        #os.system("bash simulation/umbrella_setting/run.sh")
+        os.system("bash simulation/production/run.sh")
 
 def simulation(setting_data):
     simulation_init()
@@ -182,6 +201,7 @@ def main():
         setting_data = read_setting_file()
         simulation(setting_data)
         analyze(setting_data)
+        setting_data["tryCount"] += 1
         write_setting_file(setting_data)
 
 if __name__ == "__main__":
