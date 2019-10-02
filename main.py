@@ -1,6 +1,13 @@
 import os
 import json
 import random
+import numpy as np
+import math
+import gpytorch
+import sys
+import statistics
+from matplotlib import pyplot as plt
+from scipy.stats import gaussian_kde
 
 # グローバル変数
 SETTING_FILE_NAME = "setting_file.txt"
@@ -18,7 +25,7 @@ def make_init_setting_file():
     init_data = {}
     init_data["outputFiles"] = {}
     for i in range(BIN_SIZE):
-        init_data["outputFiles"]["{}".format(i)] = []
+        init_data["outputFiles"][i] = []
 
     init_data["nextSearch"] = 90
     init_data["tryCount"] = 0
@@ -31,7 +38,7 @@ def initialize():
 class simulation_init:
 
     def make_sh(self):
-        filename = "simulation/init/run.sh"
+        filename = "init_run.sh"
         print("writing %s..." % (filename))
         with open(filename, 'w') as f:
             f.write("#!/bin/bash\n")
@@ -49,7 +56,7 @@ class simulation_init:
     def __init__(self):
         os.system("echo simulation_init")
         self.make_sh()
-        os.system("bash simulation/init/run.sh")
+        os.system("bash init_run.sh")
 
 class simulation_umbrella_setting:
     def make_input(self, setting_data):
@@ -78,7 +85,7 @@ class simulation_umbrella_setting:
             f.write("\n")
 
     def make_sh(self, setting_data):
-        filename = "simulation/umbrella_setting/run.sh"
+        filename = "umbrella_setting_run.sh"
         print("writing %s..." % (filename))
         with open(filename, 'w') as f:
             f.write("#!/bin/bash\n")
@@ -116,12 +123,11 @@ class simulation_umbrella_setting:
         self.make_input(setting_data)
         self.make_sh(setting_data)
         os.system("echo simulation_umbrella_setting")
-        os.system("bash simulation/umbrella_setting/run.sh")
+        os.system("bash umbrella_setting_run.sh")
 
 class simulation_production:
-    def make_input(self, setting_data):
+    def make_input(self, setting_data, outputFilePath):
         filename = "simulation/production/run.in"
-        value = setting_data["tryCount"]
         print("writing %s..." % (filename))
         with open(filename, 'w') as f:
             ig = random.randint(0,1000000)
@@ -146,11 +152,11 @@ class simulation_production:
             f.write("  type='END',\n")
             f.write(" /\n")
             f.write("DISANG=simulation/production/run.disang\n")
-            f.write("DUMPAVE=simulation/data/run_%d.dat\n" % (value))
+            f.write("DUMPAVE={}\n".format(outputFilePath))
             f.write("\n")
 
     def make_sh(self, setting_data):
-        filename = "simulation/production/run.sh"
+        filename = "production_run.sh"
         print("writing %s..." % (filename))
         with open(filename, 'w') as f:
             f.write("#!/bin/bash\n")
@@ -179,24 +185,178 @@ class simulation_production:
             f.write("\n")
 
     def __init__(self, setting_data):
+        outputFilePath = "simulation/data/run_{}.dat".format(setting_data["tryCount"])
+        setting_data["outputFiles"][setting_data["tryCount"]].append(outputFilePath)
+
         self.make_disang(setting_data)
         self.make_input(setting_data)
-        self.make_sh(setting_data)
+        self.make_sh(setting_data, outputFilePath)
         os.system("echo simulation_production")
-        os.system("bash simulation/production/run.sh")
+        os.system("bash production_run.sh")
 
 def simulation(setting_data):
     simulation_init()
     simulation_umbrella_setting(setting_data)
     simulation_production(setting_data)
 
-def analyze(setting_data):
-    pass
+class ExactGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+class analyze():
+
+    def gauss(self, x, mean):
+        _x = np.linalg.norm(np.array(x) - np.array(mean))
+        return math.exp(-((_x ** 2) / (2 * (SIGMA_POW_2))))
+
+    def biased_energy(self, x, center):
+        dx = np.linalg.norm(x - center)
+        dx = dx - (math.trunc(dx / 360.0)) * 360.0
+        return (SPRING_CONSTANT / KBT) * (dx ** 2)
+
+    def cal_delta_PMF(self, x_from, x_to, center, kde):
+        tmp_PMF_to =  KBT * math.log(kde(x_to)) + self.biased_energy(x_to, center)
+        tmp_PMF_from =  KBT * math.log(kde(x_from)) + self.biased_energy(x_from, center)
+        return - (tmp_PMF_to - tmp_PMF_from)
+
+    def train(self, training_times, model, likelihood, optimizer, mll, train_x, train_y):
+        for i in range(training_times):
+            optimizer.zero_grad()
+            output = model(train_x)
+            loss = -mll(output, train_y)
+            loss.backward()
+            print('Iter %d/%d - Loss: %.3f' % (i + 1,
+                                               training_times,
+                                               loss.item()))
+            optimizer.step()
+
+    def __init__(self, setting_data):
+        TEMPARETURE = 300.
+        KB_KCALPERMOL = 0.0019872041
+        KBT = KB_KCALPERMOL * TEMPARETURE
+        SPRING_CONSTANT = 200.0 * ((math.pi/180.0) ** 2)
+        SIGMA = 5
+        SIGMA_POW_2 = SIGMA ** 2
+
+        train_x = []
+        train_y = []
+        for angle in range(BIN_SIZE):
+            rowData = []
+            for filePath in setting_data["outputFiles"][angle]:
+                with open(filePath) as file:
+                    tmpRowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
+                    rowData.extend(tmpRowData)
+
+            now_kde = gaussian_kde(rowData.T)
+
+            tmp_x = numpy.linspace(rowData.min(), rowData.max(), 70)
+            for i in range(len(tmp_x) - 1):
+                now_x = [tmp_x[i], tmp_x[i+1]]
+                now_y = cal_delta_PMF(tmp_x[i], tmp_x[i+1], angle, now_kde)
+
+                train_x.append(now_x)
+                train_y.append(now_y)
+
+        train_x = torch.Tensor(np.array(train_x))
+        train_y = torch.Tensor(np.array(train_y))
+        likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        model = ExactGPModel(train_x, train_y, likelihood)
+
+        model.train()
+        likelihood.train()
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},  # Includes GaussianLikelihood parameters
+        ], lr=0.1)
+
+        mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+        self.train(40, model, likelihood, optimizer, mll, train_x, train_y)
+
+        model.eval()
+        likelihood.eval()
+
+        plot_x = range(BIN_SIZE)
+        freeEnegy_y = [0 for i in range(BIN_SIZE)]
+        freeEnegy_diff_y = [0 for i in range(BIN_SIZE)]
+        variance_y = [0 for i in range(BIN_SIZE)]
+        variance_y_cou = [0 for i in range(BIN_SIZE)]
+        variance_sum_y = [0 for i in range(BIN_SIZE)]
+
+        pred_x = []
+        for i in range(BIN_SIZE-1):
+            for j in range(DATA_TRAIN_SPLIT):
+                pred_x.append([i+j*(1.0/DATA_TRAIN_SPLIT), i+(j+1)*(1.0/DATA_TRAIN_SPLIT)])
+
+        pred_y = likelihood(model(torch.Tensor(pred_x)))
+        grad = pred_y.mean
+        lower, upper = pred_y.confidence_region()
+
+        for i in range(len(plot_x) - 1):
+            nowEnegy = 0
+            nowVariance = 0
+
+            for j in range(DATA_TRAIN_SPLIT):
+                id = i * DATA_TRAIN_SPLIT + j
+                diff_variance = (upper[id] - lower[id]) / 2
+                nowEnegy += grad[id]
+                nowVariance += diff_variance ** 2
+
+                if (j / DATA_TRAIN_SPLIT) < 0.5:
+                    variance_y[i] += diff_variance ** 2
+                    variance_y_cou[i] += 1
+                else:
+                    variance_y[i+1] += diff_variance ** 2
+                    variance_y_cou[i+1] += 1
+
+            freeEnegy_y[i+1] = freeEnegy_y[i] + nowEnegy.item()
+            freeEnegy_diff_y[i+1] = nowEnegy.item()
+            variance_sum_y[i+1] = variance_sum_y[i] + nowVariance.item()
+
+        for i in range(len(variance_sum_y)):
+            variance_sum_y[i] = math.sqrt(variance_sum_y[i])
+            variance_y[i] /= max(1, variance_y_cou[i])
+
+        variance_upper_y = (numpy.array(freeEnegy_y) + numpy.array(variance_sum_y)).tolist()
+        variance_lower_y = (numpy.array(freeEnegy_y) - numpy.array(variance_sum_y)).tolist()
+
+        f, ax = plt.subplots(1, 1, figsize=(8, 6))
+        ax.plot(plot_x, freeEnegy_y, 'b')
+        ax.set_ylim([numpy.array(variance_lower_y).min() - 1, numpy.array(variance_upper_y).max() + 1])
+        ax.fill_between(plot_x, variance_lower_y, variance_upper_y, alpha=0.5)
+        ax.legend(['Observed Data', 'Mean', 'Confidence'])
+        plt.savefig('simulation/output/freeEnegy_{}.png'.format(setting_data["tryCount"]))
+
+        f, ax = plt.subplots(1, 1, figsize=(8, 6))
+        ax.plot(plot_x, freeEnegy_diff_y, 'b')
+        ax.set_ylim([numpy.array(freeEnegy_diff_y).min() - 0.5, numpy.array(freeEnegy_diff_y).max() + 0.5])
+        plt.savefig('simulation/output/diff_{}.png'.format(setting_data["tryCount"]))
+
+        f, ax = plt.subplots(1, 1, figsize=(8, 6))
+        ax.plot(plot_x, variance_y, 'b')
+        ax.plot(range(len(tmp_x)), tmp_y.tolist(), 'b')
+        plt.savefig('simulation/output/variance_{}.png'.format(setting_data["tryCount"]))
+
+        max_vaiance = 0
+        max_id = -1
+        for i in range(181):
+            if tmp_y[i] > max_vaiance:
+                max_id = i
+                max_variance = variance_y[i]
+
+        init_data["nextSearch"] = max_id
+
 
 def main():
     initialize()
 
-    playCount = 1
+    playCount = 0
     for _ in range(playCount):
         setting_data = read_setting_file()
         simulation(setting_data)
