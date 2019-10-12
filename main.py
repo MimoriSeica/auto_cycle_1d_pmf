@@ -249,25 +249,18 @@ class analyze():
         train_x = []
         train_y = []
         for angle in range(BIN_SIZE):
-            rowData = []
             for filePath in setting_data["outputFiles"]["{}".format(angle)]:
                 with open(filePath) as file:
-                    tmpRowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
-                    rowData.extend(tmpRowData)
+                    rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
+                    now_kde = gaussian_kde(rowData.T)
 
-            if not rowData:
-                continue
+                    tmp_x = np.linspace(rowData.min(), rowData.max(), 70)
+                    for i in range(len(tmp_x) - 1):
+                        now_x = [tmp_x[i], tmp_x[i+1]]
+                        now_y = self.cal_delta_PMF(tmp_x[i], tmp_x[i+1], angle, now_kde)
 
-            rowData = np.array(rowData)
-            now_kde = gaussian_kde(rowData.T)
-
-            tmp_x = np.linspace(rowData.min(), rowData.max(), 70)
-            for i in range(len(tmp_x) - 1):
-                now_x = [tmp_x[i], tmp_x[i+1]]
-                now_y = self.cal_delta_PMF(tmp_x[i], tmp_x[i+1], angle, now_kde)
-
-                train_x.append(now_x)
-                train_y.append(now_y)
+                        train_x.append(now_x)
+                        train_y.append(now_y)
 
         train_x = torch.Tensor(np.array(train_x))
         train_y = torch.Tensor(np.array(train_y))
