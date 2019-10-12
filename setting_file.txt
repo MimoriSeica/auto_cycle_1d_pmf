@@ -1,0 +1,346 @@
+{
+    "outputFiles": {
+        "0": [
+            "simulation/data/run_37.dat",
+            "simulation/data/run_60.dat",
+            "simulation/data/run_75.dat"
+        ],
+        "1": [
+            "simulation/data/run_1.dat"
+        ],
+        "2": [],
+        "3": [],
+        "4": [],
+        "5": [],
+        "6": [],
+        "7": [],
+        "8": [
+            "simulation/data/run_18.dat",
+            "simulation/data/run_39.dat",
+            "simulation/data/run_55.dat",
+            "simulation/data/run_74.dat"
+        ],
+        "9": [],
+        "10": [],
+        "11": [],
+        "12": [],
+        "13": [],
+        "14": [],
+        "15": [],
+        "16": [
+            "simulation/data/run_3.dat",
+            "simulation/data/run_53.dat",
+            "simulation/data/run_76.dat"
+        ],
+        "17": [],
+        "18": [],
+        "19": [],
+        "20": [
+            "simulation/data/run_22.dat"
+        ],
+        "21": [],
+        "22": [],
+        "23": [
+            "simulation/data/run_94.dat"
+        ],
+        "24": [],
+        "25": [],
+        "26": [
+            "simulation/data/run_34.dat",
+            "simulation/data/run_51.dat"
+        ],
+        "27": [],
+        "28": [],
+        "29": [
+            "simulation/data/run_4.dat"
+        ],
+        "30": [],
+        "31": [],
+        "32": [
+            "simulation/data/run_70.dat"
+        ],
+        "33": [],
+        "34": [
+            "simulation/data/run_21.dat"
+        ],
+        "35": [],
+        "36": [],
+        "37": [],
+        "38": [],
+        "39": [
+            "simulation/data/run_33.dat",
+            "simulation/data/run_52.dat",
+            "simulation/data/run_78.dat"
+        ],
+        "40": [],
+        "41": [],
+        "42": [],
+        "43": [
+            "simulation/data/run_5.dat"
+        ],
+        "44": [
+            "simulation/data/run_82.dat"
+        ],
+        "45": [],
+        "46": [],
+        "47": [],
+        "48": [],
+        "49": [
+            "simulation/data/run_20.dat",
+            "simulation/data/run_31.dat"
+        ],
+        "50": [],
+        "51": [],
+        "52": [],
+        "53": [],
+        "54": [
+            "simulation/data/run_42.dat",
+            "simulation/data/run_59.dat",
+            "simulation/data/run_88.dat"
+        ],
+        "55": [],
+        "56": [],
+        "57": [
+            "simulation/data/run_6.dat"
+        ],
+        "58": [],
+        "59": [],
+        "60": [
+            "simulation/data/run_95.dat"
+        ],
+        "61": [
+            "simulation/data/run_89.dat"
+        ],
+        "62": [
+            "simulation/data/run_61.dat"
+        ],
+        "63": [
+            "simulation/data/run_19.dat",
+            "simulation/data/run_38.dat"
+        ],
+        "64": [],
+        "65": [],
+        "66": [],
+        "67": [],
+        "68": [],
+        "69": [],
+        "70": [
+            "simulation/data/run_45.dat",
+            "simulation/data/run_90.dat"
+        ],
+        "71": [
+            "simulation/data/run_25.dat",
+            "simulation/data/run_73.dat"
+        ],
+        "72": [
+            "simulation/data/run_7.dat",
+            "simulation/data/run_65.dat"
+        ],
+        "73": [],
+        "74": [],
+        "75": [],
+        "76": [],
+        "77": [],
+        "78": [],
+        "79": [
+            "simulation/data/run_43.dat"
+        ],
+        "80": [],
+        "81": [
+            "simulation/data/run_12.dat",
+            "simulation/data/run_23.dat",
+            "simulation/data/run_56.dat",
+            "simulation/data/run_69.dat",
+            "simulation/data/run_87.dat"
+        ],
+        "82": [],
+        "83": [],
+        "84": [],
+        "85": [],
+        "86": [],
+        "87": [],
+        "88": [],
+        "89": [],
+        "90": [
+            "simulation/data/run_0.dat"
+        ],
+        "91": [
+            "simulation/data/run_32.dat",
+            "simulation/data/run_66.dat",
+            "simulation/data/run_83.dat"
+        ],
+        "92": [],
+        "93": [
+            "simulation/data/run_49.dat",
+            "simulation/data/run_96.dat"
+        ],
+        "94": [],
+        "95": [],
+        "96": [],
+        "97": [],
+        "98": [],
+        "99": [
+            "simulation/data/run_16.dat",
+            "simulation/data/run_80.dat"
+        ],
+        "100": [
+            "simulation/data/run_30.dat"
+        ],
+        "101": [
+            "simulation/data/run_57.dat",
+            "simulation/data/run_91.dat"
+        ],
+        "102": [],
+        "103": [],
+        "104": [],
+        "105": [],
+        "106": [
+            "simulation/data/run_8.dat"
+        ],
+        "107": [],
+        "108": [],
+        "109": [],
+        "110": [
+            "simulation/data/run_28.dat",
+            "simulation/data/run_67.dat"
+        ],
+        "111": [
+            "simulation/data/run_46.dat",
+            "simulation/data/run_84.dat"
+        ],
+        "112": [
+            "simulation/data/run_99.dat"
+        ],
+        "113": [],
+        "114": [],
+        "115": [],
+        "116": [
+            "simulation/data/run_26.dat"
+        ],
+        "117": [
+            "simulation/data/run_14.dat"
+        ],
+        "118": [],
+        "119": [
+            "simulation/data/run_58.dat",
+            "simulation/data/run_79.dat"
+        ],
+        "120": [],
+        "121": [],
+        "122": [],
+        "123": [],
+        "124": [
+            "simulation/data/run_9.dat"
+        ],
+        "125": [],
+        "126": [
+            "simulation/data/run_48.dat"
+        ],
+        "127": [
+            "simulation/data/run_85.dat",
+            "simulation/data/run_97.dat"
+        ],
+        "128": [],
+        "129": [
+            "simulation/data/run_29.dat",
+            "simulation/data/run_68.dat"
+        ],
+        "130": [],
+        "131": [],
+        "132": [],
+        "133": [],
+        "134": [
+            "simulation/data/run_17.dat"
+        ],
+        "135": [],
+        "136": [
+            "simulation/data/run_41.dat",
+            "simulation/data/run_92.dat"
+        ],
+        "137": [
+            "simulation/data/run_62.dat"
+        ],
+        "138": [],
+        "139": [],
+        "140": [],
+        "141": [],
+        "142": [
+            "simulation/data/run_10.dat"
+        ],
+        "143": [],
+        "144": [
+            "simulation/data/run_24.dat"
+        ],
+        "145": [
+            "simulation/data/run_44.dat"
+        ],
+        "146": [],
+        "147": [
+            "simulation/data/run_64.dat"
+        ],
+        "148": [],
+        "149": [
+            "simulation/data/run_81.dat"
+        ],
+        "150": [],
+        "151": [],
+        "152": [],
+        "153": [],
+        "154": [
+            "simulation/data/run_15.dat"
+        ],
+        "155": [
+            "simulation/data/run_36.dat",
+            "simulation/data/run_50.dat",
+            "simulation/data/run_71.dat",
+            "simulation/data/run_93.dat"
+        ],
+        "156": [],
+        "157": [],
+        "158": [],
+        "159": [],
+        "160": [],
+        "161": [
+            "simulation/data/run_11.dat"
+        ],
+        "162": [],
+        "163": [
+            "simulation/data/run_40.dat",
+            "simulation/data/run_77.dat",
+            "simulation/data/run_98.dat"
+        ],
+        "164": [],
+        "165": [],
+        "166": [],
+        "167": [],
+        "168": [],
+        "169": [],
+        "170": [
+            "simulation/data/run_63.dat"
+        ],
+        "171": [
+            "simulation/data/run_13.dat"
+        ],
+        "172": [
+            "simulation/data/run_27.dat",
+            "simulation/data/run_47.dat"
+        ],
+        "173": [
+            "simulation/data/run_86.dat"
+        ],
+        "174": [],
+        "175": [],
+        "176": [],
+        "177": [],
+        "178": [],
+        "179": [],
+        "180": [
+            "simulation/data/run_2.dat",
+            "simulation/data/run_35.dat",
+            "simulation/data/run_54.dat",
+            "simulation/data/run_72.dat"
+        ]
+    },
+    "nextSearch": 59,
+    "tryCount": 100
+}
