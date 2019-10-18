@@ -6,7 +6,7 @@ with open("wham_pmf.txt") as file:
 
     f, ax = plt.subplots(1, 1, figsize=(8, 6))
     ax.plot(thisArray[:, 0], thisArray[:, 1])
-    #ax.set_ylim([0, 3])
+    ax.set_ylim([-10, 15])
     ax.set_xlabel("angle")
     ax.set_ylabel("search number")
     plt.show()
