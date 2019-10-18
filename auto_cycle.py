@@ -254,11 +254,10 @@ class analyze():
                     rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
                     now_kde = gaussian_kde(rowData.T)
 
-                    tmp_x = np.linspace(rowData.min(), rowData.max(), 70)
-                    for i in range(len(tmp_x) - 1):
-                        now_x = [tmp_x[i], tmp_x[i+1]]
-                        now_y = self.cal_delta_PMF(tmp_x[i], tmp_x[i+1], angle, now_kde)
-
+                    tmp_x = np.linspace(angle - 5, angle + 5 - (1.0/self.DATA_TRAIN_SPLIT), 35)
+                    for i in range(len(tmp_x)):
+                        now_x = [tmp_x[i]]
+                        now_y = self.cal_delta_PMF(tmp_x[i], tmp_x[i] + (1.0/self.DATA_TRAIN_SPLIT), angle, now_kde)
                         train_x.append(now_x)
                         train_y.append(now_y)
 
@@ -275,7 +274,7 @@ class analyze():
         ], lr=0.1)
 
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-        self.train(40, model, likelihood, optimizer, mll, train_x, train_y)
+        self.train(50, model, likelihood, optimizer, mll, train_x, train_y)
 
         model.eval()
         likelihood.eval()
@@ -290,7 +289,7 @@ class analyze():
         pred_x = []
         for i in range(BIN_SIZE-1):
             for j in range(self.DATA_TRAIN_SPLIT):
-                pred_x.append([i+j*(1.0/self.DATA_TRAIN_SPLIT), i+(j+1)*(1.0/self.DATA_TRAIN_SPLIT)])
+                pred_x.append([i+j*(1.0/self.DATA_TRAIN_SPLIT)])
 
         pred_y = likelihood(model(torch.Tensor(pred_x)))
         grad = pred_y.mean
@@ -320,7 +319,6 @@ class analyze():
         for i in range(len(variance_sum_y)):
             variance_sum_y[i] = math.sqrt(variance_sum_y[i])
             variance_y[i] /= max(1, variance_y_cou[i])
-            variance_y[i] =  variance_y[i].item()
 
         variance_upper_y = (np.array(freeEnegy_y) + np.array(variance_sum_y)).tolist()
         variance_lower_y = (np.array(freeEnegy_y) - np.array(variance_sum_y)).tolist()
