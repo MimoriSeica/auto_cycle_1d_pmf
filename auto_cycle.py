@@ -142,7 +142,7 @@ class simulation_production:
             f.write("   ntt=3, gamma_ln=2.0, temp0=300.0,\n")
             f.write("   ntb=0, nscm=10000,\n")
             f.write("   ioutfm=1,\n")
-            f.write("   nstlim=500000, dt=0.002,\n")
+            f.write("   nstlim=5000000, dt=0.002,\n")
             f.write("   ntpr=5000, ntwx=5000, ntwv=0, ntwr=500000,\n")
             f.write("   nmropt=1,\n")
             f.write(" /\n")
@@ -246,6 +246,11 @@ class analyze():
         self.SIGMA_POW_2 = self.SIGMA ** 2
         self.DATA_TRAIN_SPLIT = 3
 
+        pred_x = []
+        for i in range(BIN_SIZE-1):
+            for j in range(self.DATA_TRAIN_SPLIT):
+                pred_x.append([i+j*(1.0/self.DATA_TRAIN_SPLIT)])
+
         train_x = []
         train_y = []
         for angle in range(BIN_SIZE):
@@ -254,10 +259,12 @@ class analyze():
                     rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
                     now_kde = gaussian_kde(rowData.T)
 
-                    tmp_x = np.linspace(angle - 5, angle + 5 - (1.0/self.DATA_TRAIN_SPLIT), 35)
-                    for i in range(len(tmp_x)):
-                        now_x = [tmp_x[i]]
-                        now_y = self.cal_delta_PMF(tmp_x[i], tmp_x[i] + (1.0/self.DATA_TRAIN_SPLIT), angle, now_kde)
+                    for x in pred_x:
+                        if x[0] < angle - 5 or angle + 5 - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
+                            continue
+
+                        now_x = [x[0]]
+                        now_y = self.cal_delta_PMF(x[0], x[0] + (1.0/self.DATA_TRAIN_SPLIT), angle, now_kde)
                         train_x.append(now_x)
                         train_y.append(now_y)
 
@@ -285,11 +292,6 @@ class analyze():
         variance_y = [0 for i in range(BIN_SIZE)]
         variance_y_cou = [0 for i in range(BIN_SIZE)]
         variance_sum_y = [0 for i in range(BIN_SIZE)]
-
-        pred_x = []
-        for i in range(BIN_SIZE-1):
-            for j in range(self.DATA_TRAIN_SPLIT):
-                pred_x.append([i+j*(1.0/self.DATA_TRAIN_SPLIT)])
 
         pred_y = likelihood(model(torch.Tensor(pred_x)))
         grad = pred_y.mean
