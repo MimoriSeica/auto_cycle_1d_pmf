@@ -25,6 +25,9 @@ def write_setting_file(setting_data):
 def make_init_setting_file():
     init_data = {}
     init_data["outputFiles"] = {}
+    init_data["free_energy"] = {}
+    init_data["variance"] = {}
+
     for i in range(BIN_SIZE):
         init_data["outputFiles"]["{}".format(i)] = []
 
@@ -321,6 +324,7 @@ class analyze():
         for i in range(len(variance_sum_y)):
             variance_sum_y[i] = math.sqrt(variance_sum_y[i])
             variance_y[i] /= max(1, variance_y_cou[i])
+            variance_y[i] = variance_y[i].item()
 
         variance_upper_y = (np.array(freeEnegy_y) + np.array(variance_sum_y)).tolist()
         variance_lower_y = (np.array(freeEnegy_y) - np.array(variance_sum_y)).tolist()
@@ -352,6 +356,8 @@ class analyze():
                 max_variance = variance_y[i]
 
         setting_data["nextSearch"] = max_id
+        setting_data["free_energy"][setting_data["tryCount"]] = freeEnegy_y
+        setting_data["variance"][setting_data["tryCount"]] = variance_y
         print("nextSearch is {}".format(max_id))
 
 
