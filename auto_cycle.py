@@ -188,7 +188,8 @@ class simulation_production:
     def __init__(self, setting_data):
         this_dict = {}
         this_dict["angle"] = "{}".format(setting_data["nextSearch"])
-        this_dict["filename"] = "simulation/data/run_{}.dat".format(setting_data["tryCount"])
+        outputFilePath = "simulation/data/run_{}.dat".format(setting_data["tryCount"])
+        this_dict["filename"] = outputFilePath
         setting_data["outputFiles"].append(this_dict)
 
         self.make_disang(setting_data)
