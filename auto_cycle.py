@@ -6,7 +6,7 @@ import math
 import torch
 import gpytorch
 import sys
-import statistics
+from statistics import mean, median,variance,stdev
 from matplotlib import pyplot as plt
 from scipy.stats import gaussian_kde
 
@@ -145,7 +145,7 @@ class simulation_production:
             f.write("   ntt=3, gamma_ln=2.0, temp0=300.0,\n")
             f.write("   ntb=0, nscm=10000,\n")
             f.write("   ioutfm=1,\n")
-            f.write("   nstlim=5000000, dt=0.002,\n")
+            f.write("   nstlim=10000000, dt=0.002,\n")
             f.write("   ntpr=5000, ntwx=5000, ntwv=0, ntwr=500000,\n")
             f.write("   nmropt=1,\n")
             f.write(" /\n")
@@ -247,7 +247,7 @@ class analyze():
         self.SPRING_CONSTANT = 200.0 * ((math.pi/180.0) ** 2)
         self.SIGMA = 5
         self.SIGMA_POW_2 = self.SIGMA ** 2
-        self.DATA_TRAIN_SPLIT = 3
+        self.DATA_TRAIN_SPLIT = 5
 
         pred_x = []
         for i in range(BIN_SIZE-1):
@@ -261,9 +261,10 @@ class analyze():
                 with open(filePath) as file:
                     rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
                     now_kde = gaussian_kde(rowData.T)
+                    data_stdev = stdev(rowData)
 
                     for x in pred_x:
-                        if x[0] < angle - 5 or angle + 5 - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
+                        if x[0] < angle - (data_stdev/2) or angle + (data_stdev/2) - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
                             continue
 
                         now_x = [x[0]]
@@ -366,7 +367,7 @@ def main():
     #これは最初の一回で良い
     simulation_init()
 
-    playCount = 100
+    playCount = 200
     for _ in range(playCount):
         setting_data = read_setting_file()
         print("{} th try".format(setting_data["tryCount"]))
