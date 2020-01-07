@@ -285,7 +285,7 @@ class analyze():
         ], lr=0.1)
 
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-        self.train(50, model, likelihood, optimizer, mll, train_x, train_y)
+        self.train(110, model, likelihood, optimizer, mll, train_x, train_y)
 
         model.eval()
         likelihood.eval()
