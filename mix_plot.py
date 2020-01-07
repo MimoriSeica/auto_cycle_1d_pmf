@@ -6,26 +6,92 @@ import math
 import torch
 import gpytorch
 import sys
-import re
 import statistics
 from matplotlib import pyplot as plt
 from scipy.stats import gaussian_kde
+from sklearn.linear_model import LinearRegression
 
 # グローバル変数
 SETTING_FILE_NAME = "setting_file.txt"
 BIN_SIZE = 181
 
-def read_json_file(path):
-    with open(path,'r') as f:
+def read_setting_file():
+    with open(SETTING_FILE_NAME,'r') as f:
         return json.load(f)
 
-def write_json_file(path, dict_data):
-    with open(path,'w') as f:
-        json.dump(dict_data, f, indent = 4)
+class linear_analyze():
+    def gauss(self, x, mean):
+        _x = np.linalg.norm(np.array(x) - np.array(mean))
+        return math.exp(-((_x ** 2) / (2 * (self.SIGMA_POW_2))))
 
-def get_wham_data():
-    with open("wham_pmf.txt") as file:
-        return np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
+    def biased_energy(self, x, center):
+        dx = np.linalg.norm(x - center)
+        dx = dx - (math.trunc(dx / 360.0)) * 360.0
+        return (self.SPRING_CONSTANT / self.KBT) * (dx ** 2)
+
+    def cal_Umbrella_Centers_Gaussian(self, x):
+        ret_array = [self.gauss(x, angle) for angle in self.umbrella_centers_r]
+        return np.array(ret_array)
+
+    def cal_delta_PMF(self, x_from, x_to, center, kde):
+        tmp_PMF_to =  self.KBT * math.log(kde(x_to)) + self.biased_energy(x_to, center)
+        tmp_PMF_from =  self.KBT * math.log(kde(x_from)) + self.biased_energy(x_from, center)
+        return - (tmp_PMF_to - tmp_PMF_from)
+
+    def train(self, training_times, model, likelihood, optimizer, mll, train_x, train_y):
+        for i in range(training_times):
+            optimizer.zero_grad()
+            output = model(train_x)
+            loss = -mll(output, train_y)
+            loss.backward()
+            print('Iter %d/%d - Loss: %.3f' % (i + 1,
+                                               training_times,
+                                               loss.item()))
+            optimizer.step()
+
+    def __init__(self, setting_data):
+
+        self.TEMPARETURE = 300.
+        self.KB_KCALPERMOL = 0.0019872041
+        self.KBT = self.KB_KCALPERMOL * self.TEMPARETURE
+        self.SPRING_CONSTANT = 200.0 * ((math.pi/180.0) ** 2)
+        self.SIGMA = 5
+        self.SIGMA_POW_2 = self.SIGMA ** 2
+        self.DATA_TRAIN_SPLIT = 3
+        self.umbrella_centers_r = range(181)
+
+        train_x = []
+        train_y = []
+        for angle in range(BIN_SIZE):
+            for filePath in setting_data["outputFiles"]["{}".format(angle)]:
+                with open(filePath) as file:
+                    rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
+                    now_kde = gaussian_kde(rowData.T)
+
+                    plot_x = np.linspace(angle - 5, angle + 5, 200)
+                    plot_y = now_kde(plot_x)
+
+                    for x in rowData:
+                        now_x = self.cal_Umbrella_Centers_Gaussian(x) - self.cal_Umbrella_Centers_Gaussian(angle)
+                        now_y = self.cal_delta_PMF(angle, x, angle, now_kde)
+
+                        train_x.append(now_x)
+                        train_y.append(now_y)
+
+        test_x = torch.linspace(0, 180, 181)
+        test_xx = []
+        for i in test_x:
+            test_xx.append(self.cal_Umbrella_Centers_Gaussian(i))
+
+        model = LinearRegression()
+
+        model.fit(train_x, train_y)
+        tmp_test_y = self.KBT * model.predict(test_xx)
+        tmp_test_y = tmp_test_y - tmp_test_y[0]
+        self.y = tmp_test_y
+
+    def get_y(self):
+        return self.y
 
 class ExactGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
@@ -38,7 +104,7 @@ class ExactGPModel(gpytorch.models.ExactGP):
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
-class analyze():
+class gauss_analyze():
     def gauss(self, x, mean):
         _x = np.linalg.norm(np.array(x) - np.array(mean))
         return math.exp(-((_x ** 2) / (2 * (self.SIGMA_POW_2))))
@@ -64,7 +130,7 @@ class analyze():
                                                loss.item()))
             optimizer.step()
 
-    def __init__(self, setting_data, limit, rmse_list, wham_data, row_data_dict):
+    def __init__(self, setting_data):
 
         self.TEMPARETURE = 300.
         self.KB_KCALPERMOL = 0.0019872041
@@ -78,10 +144,6 @@ class analyze():
         train_y = []
         for angle in range(BIN_SIZE):
             for filePath in setting_data["outputFiles"]["{}".format(angle)]:
-                num = int(re.search(r'\d+', filePath).group())
-                if num > limit:
-                    continue
-
                 with open(filePath) as file:
                     rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
                     now_kde = gaussian_kde(rowData.T)
@@ -149,39 +211,28 @@ class analyze():
             freeEnegy_diff_y[i+1] = nowEnegy.item()
             variance_sum_y[i+1] = variance_sum_y[i] + nowVariance.item()
 
-        for i in range(len(variance_sum_y)):
-            variance_sum_y[i] = math.sqrt(variance_sum_y[i])
-            variance_y[i] /= max(1, variance_y_cou[i])
-            variance_y[i] =  variance_y[i].item()
+        self.y = freeEnegy_y
 
-        variance_upper_y = (np.array(freeEnegy_y) + np.array(variance_sum_y)).tolist()
-        variance_lower_y = (np.array(freeEnegy_y) - np.array(variance_sum_y)).tolist()
+    def get_y(self):
+        return self.y
 
-        rmse = 0.0
-        for i in range(BIN_SIZE):
-            rmse += (wham_data[i] - freeEnegy_y[i]) ** 2
-        rmse_list.append(rmse / BIN_SIZE)
-
-        row_data_dict["free_enegy"][limit] = freeEnegy_y
-        row_data_dict["variance"][limit] = variance_y
+def wham_analyze():
+    with open("wham_from_cycle_data.txt") as file:
+        return np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
 
 def main():
-    playCount = 100
-    rmse_list = []
-    wham_data = get_wham_data()
-    row_data_dict = {}
-    row_data_dict["free_enegy"] = {}
-    row_data_dict["variance"] = {}
-    for count in range(playCount):
-        setting_data = read_json_file(SETTING_FILE_NAME)
-        print("{} th try".format(count))
-        analyze(setting_data, count, rmse_list, wham_data, row_data_dict)
+    setting_data = read_setting_file()
+    linear_y = linear_analyze(setting_data)
+    gauss_y = gauss_analyze(setting_data)
+    wham_y = wham_analyze()
 
-    dict = {}
-    dict["rmse_list"] = rmse_list
+    plot_x = range(BIN_SIZE)
+    f, ax = plt.subplots(1, 1, figsize=(8, 6))
+    ax.plot(plot_x, linear_y.get_y(), color="red")
+    ax.plot(plot_x, gauss_y.get_y(), color="orange")
+    ax.plot(plot_x, wham_y)
+    plt.show()
 
-    write_json_file("rmse_list.json", dict)
-    write_json_file("row_data.json", row_data_dict)
 
 if __name__ == "__main__":
     main()
