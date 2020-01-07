@@ -24,12 +24,9 @@ def write_setting_file(setting_data):
 
 def make_init_setting_file():
     init_data = {}
-    init_data["outputFiles"] = {}
+    init_data["outputFiles"] = []
     init_data["free_energy"] = {}
     init_data["variance"] = {}
-
-    for i in range(BIN_SIZE):
-        init_data["outputFiles"]["{}".format(i)] = []
 
     init_data["nextSearch"] = 90
     init_data["tryCount"] = 0
@@ -189,8 +186,10 @@ class simulation_production:
             f.write("\n")
 
     def __init__(self, setting_data):
-        outputFilePath = "simulation/data/run_{}.dat".format(setting_data["tryCount"])
-        setting_data["outputFiles"]["{}".format(setting_data["nextSearch"])].append(outputFilePath)
+        this_dict = {}
+        this_dict["angle"] = "{}".format(setting_data["nextSearch"])
+        this_dict["filename"] = "simulation/data/run_{}.dat".format(setting_data["tryCount"])
+        setting_data["outputFiles"].append(this_dict)
 
         self.make_disang(setting_data)
         self.make_input(setting_data, outputFilePath)
@@ -256,21 +255,22 @@ class analyze():
 
         train_x = []
         train_y = []
-        for angle in range(BIN_SIZE):
-            for filePath in setting_data["outputFiles"]["{}".format(angle)]:
-                with open(filePath) as file:
-                    rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
-                    now_kde = gaussian_kde(rowData.T)
-                    data_stdev = stdev(rowData)
+        for now_dict in setting_data["outputFiles"]:
+            filePath = now_dict["filename"]
+            angle = now_dict["angle"]
+            with open(filePath) as file:
+                rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
+                now_kde = gaussian_kde(rowData.T)
+                data_stdev = stdev(rowData)
 
-                    for x in pred_x:
-                        if x[0] < angle - (data_stdev/2) or angle + (data_stdev/2) - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
-                            continue
+                for x in pred_x:
+                    if x[0] < angle - (data_stdev/2) or angle + (data_stdev/2) - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
+                        continue
 
-                        now_x = [x[0]]
-                        now_y = self.cal_delta_PMF(x[0], x[0] + (1.0/self.DATA_TRAIN_SPLIT), angle, now_kde)
-                        train_x.append(now_x)
-                        train_y.append(now_y)
+                    now_x = [x[0]]
+                    now_y = self.cal_delta_PMF(x[0], x[0] + (1.0/self.DATA_TRAIN_SPLIT), angle, now_kde)
+                    train_x.append(now_x)
+                    train_y.append(now_y)
 
         train_x = torch.Tensor(np.array(train_x))
         train_y = torch.Tensor(np.array(train_y))
@@ -291,6 +291,8 @@ class analyze():
         likelihood.eval()
 
         plot_x = range(BIN_SIZE)
+        max_variance = 0
+        max_id = -1
         freeEnegy_y = [0 for i in range(BIN_SIZE)]
         freeEnegy_diff_y = [0 for i in range(BIN_SIZE)]
         variance_y = [0 for i in range(BIN_SIZE)]
@@ -317,6 +319,10 @@ class analyze():
                 else:
                     variance_y[i+1] += diff_variance ** 2
                     variance_y_cou[i+1] += 1
+
+                if max_variance < diff_variance:
+                    max_variance = diff_variance
+                    max_id = id / self.DATA_TRAIN_SPLIT
 
             freeEnegy_y[i+1] = freeEnegy_y[i] + nowEnegy.item()
             freeEnegy_diff_y[i+1] = nowEnegy.item()
@@ -348,13 +354,6 @@ class analyze():
         ax.plot(plot_x, variance_y, 'b')
         print("variance_y is {}".format(variance_y))
         plt.savefig('simulation/output/variance_{}.png'.format(setting_data["tryCount"]))
-
-        max_variance = 0
-        max_id = -1
-        for i in range(181):
-            if variance_y[i] > max_variance:
-                max_id = i
-                max_variance = variance_y[i]
 
         setting_data["nextSearch"] = max_id
         setting_data["free_energy"][setting_data["tryCount"]] = freeEnegy_y
