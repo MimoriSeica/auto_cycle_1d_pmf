@@ -221,7 +221,7 @@ class analyze():
     def biased_energy(self, x, center):
         dx = np.linalg.norm(x - center)
         dx = dx - (math.trunc(dx / 360.0)) * 360.0
-        return (self.SPRING_CONSTANT / self.KBT) * (dx ** 2)
+        return self.SPRING_CONSTANT * (dx ** 2)
 
     def cal_delta_PMF(self, x_from, x_to, center, kde):
         tmp_PMF_to =  self.KBT * math.log(kde(x_to)) + self.biased_energy(x_to, center)
@@ -258,14 +258,15 @@ class analyze():
         train_y = []
         for now_dict in setting_data["outputFiles"]:
             filePath = now_dict["filename"]
-            angle = now_dict["angle"]
+            angle = float(now_dict["angle"])
             with open(filePath) as file:
                 rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
                 now_kde = gaussian_kde(rowData.T)
                 data_stdev = stdev(rowData)
+                data_mean = mean(rowData)
 
                 for x in pred_x:
-                    if x[0] < angle - (data_stdev/2) or angle + (data_stdev/2) - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
+                    if x[0] < data_mean - data_stdev or data_mean + data_stdev - (1.0/self.DATA_TRAIN_SPLIT) < x[0]:
                         continue
 
                     now_x = [x[0]]
