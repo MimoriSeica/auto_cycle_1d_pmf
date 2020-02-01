@@ -12,54 +12,41 @@ from matplotlib import pyplot as plt
 from scipy.stats import gaussian_kde
 
 # グローバル変数
+SETTING_FILE_NAME = "setting_file.txt"
+WHAM_DATA_FILE = "wham_from_cycle_data.txt"
 BIN_SIZE = 181
 
-def read_json_file(path):
-    with open(path,'r') as f:
-        return json.load(f)
+def read_setting_file():
+    with open(SETTING_FILE_NAME,'r') as file:
+        return json.load(file)
 
-def get_wham_data():
-    with open("wham_from_cycle_data.txt") as file:
+def load_wham_data():
+    with open(WHAM_DATA_FILE,'r') as file:
         return np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
 
 """
 サイクルのRMSEの遷移をplotする
 """
 def main():
-    row_datas_gp = read_json_file("row_data.json")
-    wham_data = get_wham_data()
-    rmse_list_gp = []
+    free_energys = read_setting_file()['free_energy']
+    wham_data = load_wham_data()
+    plot_x = []
+    plot_y = []
 
-    for count in range(100):
-        free_enegy = row_datas_gp["free_enegy"]["{}".format(count)]
-        sum = 0;
-
+    for id, free_energy in free_energys.items():
+        rmse = 0
         for i in range(BIN_SIZE):
-            sum += (free_enegy[i] - wham_data[i]) ** 2
+            rmse += (wham_data[i] - free_energy[i]) ** 2
 
-        rmse_list_gp.append(sum / BIN_SIZE)
-
-    row_datas_liner = read_json_file("row_data_liner.json")
-    rmse_list_liner = []
-
-    for count in range(100):
-        free_enegy = row_datas_liner["free_enegy"]["{}".format(count)]
-        sum = 0;
-
-        for i in range(BIN_SIZE):
-            sum += (free_enegy[i] - wham_data[i]) ** 2
-
-        rmse_list_liner.append(sum / BIN_SIZE)
+        rmse /= BIN_SIZE
+        plot_x.append(id)
+        plot_y.append(rmse)
+        print(id, rmse)
 
     f, ax = plt.subplots(1, 1, figsize=(8, 6))
-    ax.plot(range(len(rmse_list_gp)), rmse_list_gp, 'b')
-    ax.plot(range(len(rmse_list_liner)), rmse_list_liner, color = "red")
-    ax.plot(range(len(rmse_list_gp)), [0.1909531092466414 for i in range(len(rmse_list_gp))], color = "orange")
-    ax.plot(range(len(rmse_list_gp)), [2.6104119312491014 for i in range(len(rmse_list_gp))])
-    ax.set_ylim([0, 10])
-    ax.set_xlabel("cycle count")
-    ax.set_ylabel("RMSE")
+    ax.plot(plot_x[15:], plot_y[15:])
     plt.show()
+
 
 if __name__ == "__main__":
     main()

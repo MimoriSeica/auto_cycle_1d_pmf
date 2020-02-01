@@ -20,23 +20,14 @@ def read_setting_file():
 サイクルがどこを選択したかをplotするもの。
 """
 def main():
-    setting_data = read_setting_file()['outputFiles']
-    hist_x = [i for i in range(BIN_SIZE)]
-    hist_y = [0 for i in range(BIN_SIZE)]
+    outputFiles = read_setting_file()['outputFiles']
+    hist_list = []
 
-    for i in range(BIN_SIZE):
-        strList = setting_data["{}".format(i)]
-        for str in strList:
-            num = int(re.search(r'\d+', str).group())
-            if num <= 60:
-                hist_y[i] += 1
+    for files in outputFiles:
+        hist_list.append(float(files["angle"]))
 
-    print(hist_y)
     f, ax = plt.subplots(1, 1, figsize=(8, 6))
-    ax.bar(hist_x, hist_y)
-    #ax.set_ylim([0, 3])
-    ax.set_xlabel("angle")
-    ax.set_ylabel("search number")
+    ax.hist(hist_list, bins=180)
     plt.show()
 
 if __name__ == "__main__":
