@@ -22,6 +22,9 @@ def get_wham_data():
     with open("wham_from_cycle_data.txt") as file:
         return np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
 
+"""
+サイクルのRMSEの遷移をplotする
+"""
 def main():
     row_datas_gp = read_json_file("row_data.json")
     wham_data = get_wham_data()

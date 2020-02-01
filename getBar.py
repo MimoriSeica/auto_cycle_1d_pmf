@@ -16,6 +16,9 @@ def read_setting_file():
     with open(SETTING_FILE_NAME,'r') as f:
         return json.load(f)
 
+"""
+サイクルがどこを選択したかをplotするもの。
+"""
 def main():
     setting_data = read_setting_file()['outputFiles']
     hist_x = [i for i in range(BIN_SIZE)]
