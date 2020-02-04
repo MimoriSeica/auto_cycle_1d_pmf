@@ -34,6 +34,7 @@ def make_init_setting_file():
     return init_data
 
 def initialize():
+    os.system("mkdir -p simulation/data/")
     write_setting_file(make_init_setting_file())
 
 class simulation_init:
