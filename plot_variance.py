@@ -13,44 +13,40 @@ from scipy.stats import gaussian_kde
 
 # グローバル変数
 SETTING_FILE_NAME = "setting_file.txt"
-WHAM_DATA_FILE = "wham_from_cycle_data.txt"
 BIN_SIZE = 181
 
 def read_setting_file():
     with open(SETTING_FILE_NAME,'r') as file:
         return json.load(file)
 
-def load_wham_data():
-    with open(WHAM_DATA_FILE,'r') as file:
-        return np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
 
 """
-サイクルのRMSEの遷移をplotする
+サイクルのvarianceの遷移をplotする
 """
 def main():
-    free_energys = read_setting_file()['free_energy']
-    wham_data = load_wham_data()
+    variances = read_setting_file()['variance']
     plot_x = []
     plot_y = []
 
-    for id, free_energy in free_energys.items():
-        rmse = 0
+    for id, variance in variances.items():
+        ave = 0
         for i in range(BIN_SIZE):
-            rmse += (wham_data[i] - free_energy[i]) ** 2
+            ave += variance[i] ** 2
 
-        rmse /= BIN_SIZE
+        ave /= BIN_SIZE
         plot_x.append(int(id)+1)
-        plot_y.append(rmse)
-        print(id, rmse)
+        plot_y.append(ave)
+        print(id, ave)
         if int(id) == 90:
             break
 
+
     f, ax = plt.subplots(1, 1, figsize=(8, 6))
-    ax.plot(plot_x[11:], plot_y[11:])
+    ax.plot(plot_x[20:], plot_y[20:])
     ax.tick_params(labelsize=12)
     ax.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
     plt.xlabel("number of sampling", fontsize=18)
-    plt.ylabel("RMSE", fontsize=18)
+    plt.ylabel("mean of doubled variance", fontsize=18)
     plt.show()
 
 
