@@ -341,25 +341,6 @@ class analyze():
         variance_upper_y = (np.array(freeEnegy_y) + np.array(variance_sum_y)).tolist()
         variance_lower_y = (np.array(freeEnegy_y) - np.array(variance_sum_y)).tolist()
 
-        f, ax = plt.subplots(1, 1, figsize=(8, 6))
-        ax.plot(plot_x, freeEnegy_y, 'b')
-        ax.set_ylim([np.array(variance_lower_y).min() - 1, np.array(variance_upper_y).max() + 1])
-        ax.fill_between(plot_x, variance_lower_y, variance_upper_y, alpha=0.5)
-        ax.legend(['Observed Data', 'Mean', 'Confidence'])
-        print("freeEnegy_y is {}".format(freeEnegy_y))
-        plt.savefig('simulation/output/freeEnegy_{}.png'.format(setting_data["tryCount"]))
-
-        f, ax = plt.subplots(1, 1, figsize=(8, 6))
-        ax.plot(plot_x, freeEnegy_diff_y, 'b')
-        ax.set_ylim([np.array(freeEnegy_diff_y).min() - 0.5, np.array(freeEnegy_diff_y).max() + 0.5])
-        print("freeEnegy_diff_y is {}".format(freeEnegy_diff_y))
-        plt.savefig('simulation/output/diff_{}.png'.format(setting_data["tryCount"]))
-
-        f, ax = plt.subplots(1, 1, figsize=(8, 6))
-        ax.plot(plot_x, variance_y, 'b')
-        print("variance_y is {}".format(variance_y))
-        plt.savefig('simulation/output/variance_{}.png'.format(setting_data["tryCount"]))
-
         setting_data["nextSearch"] = max_id
         setting_data["free_energy"][setting_data["tryCount"]] = freeEnegy_y
         setting_data["variance"][setting_data["tryCount"]] = variance_y
