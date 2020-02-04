@@ -262,6 +262,8 @@ class analyze():
             with open(filePath) as file:
                 rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
                 now_kde = gaussian_kde(rowData.T)
+                # now_kde = lambda x: math.exp(-(((x - data_mean) ** 2) / (2 * (data_stdev ** 2))))
+
                 data_stdev = stdev(rowData)
                 data_mean = mean(rowData)
 
@@ -368,7 +370,7 @@ def main():
     #これは最初の一回で良い
     simulation_init()
 
-    playCount = 200
+    playCount = 31
     for _ in range(playCount):
         setting_data = read_setting_file()
         print("{} th try".format(setting_data["tryCount"]))
