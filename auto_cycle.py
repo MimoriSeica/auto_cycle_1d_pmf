@@ -262,8 +262,8 @@ class analyze():
             angle = float(now_dict["angle"])
             with open(filePath) as file:
                 rowData = np.array([str.strip().split() for str in file.readlines()], dtype = 'float')[:, 1]
-                now_kde = gaussian_kde(rowData.T)
-                # now_kde = lambda x: math.exp(-(((x - data_mean) ** 2) / (2 * (data_stdev ** 2))))
+                # now_kde = gaussian_kde(rowData.T)
+                now_kde = lambda x: math.exp(-(((x - data_mean) ** 2) / (2 * (data_stdev ** 2))))
 
                 data_stdev = stdev(rowData)
                 data_mean = mean(rowData)
