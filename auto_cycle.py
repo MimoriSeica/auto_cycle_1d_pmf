@@ -14,6 +14,38 @@ from scipy.stats import gaussian_kde
 SETTING_FILE_NAME = "setting_file.txt"
 BIN_SIZE = 181
 
+"""
+計算させたい配列と
+左右の幅(1なら中心と左右1こずつ)
+"""
+def cal_max_mean_center(m_array, cal_range):
+    max_id = -1
+    max_mean = -1000000000
+    diff = [i + 1 for i in range(cal_range)]
+    for x in range(len(m_array)):
+        now_mean = m_array[x]
+        now_cou = 1
+        for i in diff:
+            if x + i >= len(m_array):
+                continue
+
+            now_mean += m_array[x + i]
+            now_cou += 1
+
+        for i in diff:
+            if x - i < 0:
+                continue
+
+            now_mean += m_array[x - i]
+            now_cou += 1
+
+        now_mean /= now_cou
+        if max_mean < now_mean:
+            max_mean = now_mean
+            max_id = int(x)
+
+    return max_id
+
 def read_setting_file():
     with open(SETTING_FILE_NAME,'r') as f:
         return json.load(f)
@@ -303,6 +335,7 @@ class analyze():
         variance_y = [0 for i in range(BIN_SIZE)]
         variance_y_cou = [0 for i in range(BIN_SIZE)]
         variance_sum_y = [0 for i in range(BIN_SIZE)]
+        variance_detailed = []
 
         pred_y = likelihood(model(torch.Tensor(pred_x)))
         grad = pred_y.mean
@@ -325,6 +358,7 @@ class analyze():
                     variance_y[i+1] += diff_variance ** 2
                     variance_y_cou[i+1] += 1
 
+                variance_detailed.append(diff_variance)
                 if max_variance < diff_variance:
                     max_variance = diff_variance
                     max_id = id / self.DATA_TRAIN_SPLIT
