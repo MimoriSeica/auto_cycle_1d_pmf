@@ -41,7 +41,7 @@ def main():
         rmse /= BIN_SIZE
         plot_x.append(int(id)+1)
         plot_y.append(rmse)
-        print(id, rmse)
+        print(rmse)
         if int(id) == 90:
             break
 
